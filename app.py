@@ -1,16 +1,55 @@
 import gradio as gr
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
+MODEL_ID = "bigscience/bloom-560m"
 
-# Dummy function (replace with your LLM call)
-def generate_idiom(situation):
-    # Replace with actual model call later
-    pipe = pipeline(task="text-generation", model="openai/gpt-oss-20b")
-    response = pipe(f"Generate a Chinese idiom for this: {situation}")
-    print(response)
-    pinyin = "duì zhèng xià yào"  
-    meaning = "To prescribe the right medicine; to take the right approach to a problem."
-    return response, f"{pinyin}\n\n{meaning}"
+# load once globally
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_ID,
+    device_map="auto",   # GPU if available, otherwise CPU
+    trust_remote_code=True
+)
+
+pipe = pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    max_new_tokens=200,
+    temperature=0.7
+)
+
+def generate_idiom(situation: str):
+    prompt = f"""You are a wise assistant. Given a situation, respond with exactly:
+1. A single Chinese idiom (成语).
+2. Its pinyin.
+3. A short English explanation.
+
+Format:
+Idiom
+Pinyin
+Explanation
+
+Situation: {situation}
+Answer:
+"""
+    response = pipe(prompt)[0]["generated_text"]
+    clean_response = response.split("Answer:")[-1].strip()
+
+    # Try to split into lines
+    lines = [line.strip() for line in clean_response.split("\n") if line.strip()]
+    if len(lines) >= 3:
+        idiom = lines[0]
+        pinyin = lines[1]
+        meaning = " ".join(lines[2:])
+        explanation = f"{pinyin}\n\n{meaning}"
+    else:
+        # fallback if formatting is off
+        idiom = clean_response
+        explanation = ""
+
+    return idiom, explanation
+
 
 with gr.Blocks(css="""
     .idiom-output {
