@@ -1,69 +1,59 @@
 import gradio as gr
-from huggingface_hub import InferenceClient
 
+# Dummy function (replace with your LLM call)
+def generate_idiom(situation):
+    # Replace with actual model call later
+    idiom = "对症下药"  
+    pinyin = "duì zhèng xià yào"  
+    meaning = "To prescribe the right medicine; to take the right approach to a problem."
+    return idiom, f"{pinyin}\n\n{meaning}"
 
-def respond(
-    message,
-    history: list[dict[str, str]],
-    system_message,
-    max_tokens,
-    temperature,
-    top_p,
-    hf_token: gr.OAuthToken,
-):
-    """
-    For more information on `huggingface_hub` Inference API support, please check the docs: https://huggingface.co/docs/huggingface_hub/v0.22.2/en/guides/inference
-    """
-    client = InferenceClient(token=hf_token.token, model="openai/gpt-oss-20b")
+with gr.Blocks(css="""
+    .idiom-output {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        color: #8B0000;
+        margin-bottom: 0.5em;
+    }
+    .explanation-output {
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #333333;
+        text-align: center;
+    }
+    .gradio-container {
+        background-color: #fdfcf7;
+    }
+""") as demo:
 
-    messages = [{"role": "system", "content": system_message}]
+    gr.Markdown("## 🀄 Chinese Wisdom Generator\nEnter a situation, get a Chinese idiom with explanation.")
 
-    messages.extend(history)
+    with gr.Row():
+        with gr.Column(scale=1):
+            situation = gr.Textbox(
+                label="Describe your situation...",
+                placeholder="e.g. I procrastinated on my homework again...",
+                lines=3
+            )
+            submit_btn = gr.Button("✨ Find Idiom")
+            gr.Examples(
+                examples=[
+                    ["I studied hard but still failed my exam."],
+                    ["I missed my bus because I woke up late."],
+                    ["I finally finished a long project after months."],
+                ],
+                inputs=[situation]
+            )
+        with gr.Column(scale=1):
+            idiom_output = gr.HTML("<div class='idiom-output'>—</div>")
+            explanation_output = gr.HTML("<div class='explanation-output'>—</div>")
 
-    messages.append({"role": "user", "content": message})
+    def update_ui(situation):
+        idiom, explanation = generate_idiom(situation)
+        return f"<div class='idiom-output'>{idiom}</div>", f"<div class='explanation-output'>{explanation}</div>"
 
-    response = ""
-
-    for message in client.chat_completion(
-        messages,
-        max_tokens=max_tokens,
-        stream=True,
-        temperature=temperature,
-        top_p=top_p,
-    ):
-        choices = message.choices
-        token = ""
-        if len(choices) and choices[0].delta.content:
-            token = choices[0].delta.content
-
-        response += token
-        yield response
-
-
-"""
-For information on how to customize the ChatInterface, peruse the gradio docs: https://www.gradio.app/docs/chatinterface
-"""
-chatbot = gr.ChatInterface(
-    respond,
-    type="messages",
-    additional_inputs=[
-        gr.Textbox(value="You are a friendly Chatbot.", label="System message"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max new tokens"),
-        gr.Slider(minimum=0.1, maximum=4.0, value=0.7, step=0.1, label="Temperature"),
-        gr.Slider(
-            minimum=0.1,
-            maximum=1.0,
-            value=0.95,
-            step=0.05,
-            label="Top-p (nucleus sampling)",
-        ),
-    ],
-)
-
-with gr.Blocks() as demo:
-    with gr.Sidebar():
-        gr.LoginButton()
-    chatbot.render()
+    submit_btn.click(update_ui, inputs=[situation], outputs=[idiom_output, explanation_output])
 
 
 if __name__ == "__main__":
