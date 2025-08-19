@@ -1,12 +1,16 @@
 import gradio as gr
+from transformers import pipeline
+
 
 # Dummy function (replace with your LLM call)
 def generate_idiom(situation):
     # Replace with actual model call later
-    idiom = "对症下药"  
+    pipe = pipeline(task="text-generation", model="openai/gpt-oss-20b")
+    response = pipe(f"Generate a Chinese idiom for this: {situation}")
+    print(response)
     pinyin = "duì zhèng xià yào"  
     meaning = "To prescribe the right medicine; to take the right approach to a problem."
-    return idiom, f"{pinyin}\n\n{meaning}"
+    return response, f"{pinyin}\n\n{meaning}"
 
 with gr.Blocks(css="""
     .idiom-output {
