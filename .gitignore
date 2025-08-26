@@ -24,3 +24,6 @@ env/
 # Hugging Face cache (model weights etc.)
 huggingface/
 *.lock
+
+
+.env 
