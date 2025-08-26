@@ -16,7 +16,7 @@ USE_MOCK = False  # Set False to use the real Cerebras API
 if not USE_MOCK:
     client = InferenceClient(
         provider="cerebras",
-        model="cerebras/btlm-3b-8k-base",
+        model="meta-llama/Llama-3.3-70B-Instruct",
         api_key=os.environ["HF_TOKEN"]
     )
 
@@ -34,7 +34,7 @@ def generate_idiom_mock(situation: str):
 def generate_idiom(situation: str, client):
     prompt = f"""
 You are a wise assistant. Given a situation, respond with exactly:
-1. A Chinese idiom (成语)
+1. A traditional Chinese idiom (成语), which is different from a 四字格， that conveys the idea of the given situation
 2. Its pinyin
 3. A short English explanation
 
