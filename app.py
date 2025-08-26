@@ -1,62 +1,64 @@
+# app.py
+import os
+from dotenv import load_dotenv
 import gradio as gr
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from huggingface_hub import InferenceClient
 
-pipe = pipeline(task="text-generation", model="bigscience/bloomz-560m")
-    
-def generate_idiom(situation):
-    response = pipe(f"Give me a Chinese idiom for this: {situation}.")
-    print(response)
-    pinyin = ""
-    meaning = ""
-    return response, f"{pinyin}\n\n{meaning}"
+load_dotenv()
 
-with gr.Blocks(css="""
-    .idiom-output {
-        font-size: 2rem;
-        font-weight: bold;
-        text-align: center;
-        color: #8B0000;
-        margin-bottom: 0.5em;
-    }
-    .explanation-output {
-        font-size: 1rem;
-        line-height: 1.5;
-        color: #333333;
-        text-align: center;
-    }
-    .gradio-container {
-        background-color: #fdfcf7;
-    }
-""") as demo:
+def generate_idiom(situation: str, client):
+    prompt = f"""
+You are a wise assistant. Given a situation, respond with exactly:
+1. A Chinese idiom (成语)
+2. Its pinyin
+3. A short English explanation
 
-    gr.Markdown("## 🀄 Chinese Wisdom Generator\nEnter a situation, get a Chinese idiom with explanation.")
+Format:
+Idiom
+Pinyin
+Explanation
 
-    with gr.Row():
-        with gr.Column(scale=1):
-            situation = gr.Textbox(
-                label="Describe your situation...",
-                placeholder="e.g. I procrastinated on my homework again...",
-                lines=3
-            )
-            submit_btn = gr.Button("✨ Find Idiom")
-            gr.Examples(
-                examples=[
-                    ["I studied hard but still failed my exam."],
-                    ["I missed my bus because I woke up late."],
-                    ["I finally finished a long project after months."],
-                ],
-                inputs=[situation]
-            )
-        with gr.Column(scale=1):
-            idiom_output = gr.HTML("<div class='idiom-output'>—</div>")
-            explanation_output = gr.HTML("<div class='explanation-output'>—</div>")
+Situation: {situation}
+Answer:
+"""
+    # Use Cerebras chat completions API
+    response = client.chat.completions.create(
+        model="meta-llama/Llama-3.3-70B-Instruct",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=150
+    )
 
-    def update_ui(situation):
-        idiom, explanation = generate_idiom(situation)
-        return f"<div class='idiom-output'>{idiom}</div>", f"<div class='explanation-output'>{explanation}</div>"
+    # Extract generated text
+    generated_text = response.choices[0].message.content.strip()
 
-    submit_btn.click(update_ui, inputs=[situation], outputs=[idiom_output, explanation_output])
+    # Split lines for UI
+    lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
+    if len(lines) >= 3:
+        idiom = lines[0]
+        pinyin = lines[1]
+        meaning = " ".join(lines[2:])
+        explanation = f"{pinyin}\n\n{meaning}"
+    else:
+        idiom = generated_text
+        explanation = ""
 
+    return idiom, explanation
 
-if __name__ == "__main__":
-    demo.launch()
+def launch_app():
+    client = InferenceClient(
+        provider="cerebras",
+        api_key=os.environ["HF_TOKEN"]
+    )
+
+    with gr.Blocks() as demo:
+        txt = gr.Textbox(label="Situation", lines=3)
+        idiom_out = gr.HTML()
+        expl_out = gr.HTML()
+        btn = gr.Button("✨ Find Idiom")
+
+        def update_ui(s):
+            return generate_idiom(s, client)
+
+        btn.click(update_ui, inputs=[txt], outputs=[idiom_out, expl_out])
+
+    demo.launch(debug=True)
