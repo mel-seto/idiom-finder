@@ -1,0 +1,48 @@
+/* ========================
+   Dark Mode Default
+   ======================== */
+body, .gradio-container {
+    background-color: #1a1a2e; 
+    color: #f0f0f0;
+    font-family: Arial, sans-serif;
+}
+
+.idiom-output {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    color: #ff6f61; 
+    margin-bottom: 0.5em;
+}
+
+.explanation-output {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #dcdcdc;
+    text-align: center;
+}
+
+/* Buttons */
+.gradio-container .gr-button {
+    background-color: #3a3a5e;
+    color: #ffffff;
+    border: 1px solid #5c5c8a;
+    font-weight: bold;
+}
+.gradio-container .gr-button:hover {
+    background-color: #505080;
+}
+
+/* Textboxes */
+.gradio-container .gr-textbox textarea {
+    background-color: #2a2a45;
+    color: #ffffff;
+    border: 1px solid #5c5c8a;
+}
+
+/* Examples */
+.gradio-container .gr-examples {
+    background-color: #2a2a45;
+    border: 1px solid #5c5c8a;
+    color: #ffffff;
+}
