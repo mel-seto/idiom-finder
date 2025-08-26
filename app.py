@@ -8,7 +8,7 @@ load_dotenv()
 # ======================
 # Toggle between Mock / Real API
 # ======================
-USE_MOCK = True  # Set False to use the real Cerebras API
+USE_MOCK = False  # Set False to use the real Cerebras API
 
 # ======================
 # Instantiate client (only if not using mock)
