@@ -1,0 +1,15 @@
+[project]
+name = "chinese-idioms"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gradio>=4.44.1",
+]
+
+[dependency-groups]
+dev = [
+    "python-dotenv>=1.1.1",
+    "watchfiles>=1.1.0",
+]
