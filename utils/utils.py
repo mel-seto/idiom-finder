@@ -1,4 +1,5 @@
-from pypinyin import pinyin, Style
+from pypinyin import Style, pinyin
+
 
 def get_pinyin(text: str):
     """Convert Chinese characters to pinyin with tones."""
