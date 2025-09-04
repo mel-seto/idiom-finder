@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "gradio>=4.44.1",
+    "pypinyin>=0.55.0",
+    "pytest>=8.4.2",
 ]
 
 [dependency-groups]
