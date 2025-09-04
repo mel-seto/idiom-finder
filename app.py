@@ -36,13 +36,15 @@ def generate_idiom_mock(situation: str):
 def generate_idiom(situation: str, client):
     prompt = f"""
 You are a wise assistant. Given a situation, respond with exactly:
-1. A traditional Chinese idiom (成语), which is different from a 四字格， that conveys the idea of the given situation
+1. A traditional Chinese idiom (which includes 成語、俗語、諺語)， that conveys the idea of the given situation. 
 2. Its pinyin
-3. A short English explanation
+3. Its literal English translation
+4. Explain idiom. Keep explanation to 2-3 concise sentences.
 
 Format:
 Idiom
 Pinyin
+Literal translation
 Explanation
 
 Situation: {situation}
@@ -60,8 +62,9 @@ Answer:
     if len(lines) >= 3:
         idiom = lines[0]
         pinyin = lines[1]
-        meaning = " ".join(lines[2:])
-        explanation = f"{pinyin}<br><br>{meaning}"
+        translation = lines[2]
+        meaning = " ".join(lines[3:])
+        explanation = f"{pinyin}<br><br>{translation}<br><br>{meaning}"
     else:
         idiom = generated_text
         explanation = ""
@@ -87,7 +90,7 @@ def update_ui(situation):
 # ======================
 def launch_app():
     with gr.Blocks(css="style.css") as demo:
-        gr.Markdown("# 🎋 Chinese Idioms Generator")
+        gr.Markdown("# 🎋 Chinese Idioms Finder")
 
         with gr.Row():
             with gr.Column():
@@ -96,7 +99,7 @@ def launch_app():
                     lines=2,
                     placeholder="e.g., When facing a big challenge"
                 )
-                generate_btn = gr.Button("✨ Generate Idiom")
+                generate_btn = gr.Button("✨ Find Idiom")
 
                 # ✅ Example situations
                 gr.Examples(
