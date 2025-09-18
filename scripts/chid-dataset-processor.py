@@ -7,7 +7,6 @@ import json
 from datasets import load_dataset
 from pypinyin import Style, pinyin
 
-
 dataset = load_dataset("thu-coai/chid")
 
 candidate_idioms = {

@@ -2,9 +2,8 @@ import json
 import os
 
 import gradio as gr
-from dotenv import load_dotenv
 from cerebras.cloud.sdk import Cerebras
-
+from dotenv import load_dotenv
 
 from utils.utils import get_pinyin
 
@@ -64,7 +63,8 @@ Situation: {situation}
 Answer:"""
 
     response = CLIENT.chat.completions.create(
-        model=MODEL, messages=[{"role": "user", "content": prompt}], 
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
     )
     print(response)
 
