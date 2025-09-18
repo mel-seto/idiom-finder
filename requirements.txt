@@ -106,7 +106,7 @@ multidict==6.6.4
     #   yarl
 multiprocess==0.70.16
     # via datasets
-numpy==2.3.3
+numpy >= 2.0, < 3.0
     # via
     #   datasets
     #   gradio
