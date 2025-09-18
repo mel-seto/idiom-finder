@@ -1,8 +1,10 @@
+import json
 import os
 
 import gradio as gr
 from dotenv import load_dotenv
-from huggingface_hub import InferenceClient
+from cerebras.cloud.sdk import Cerebras
+
 
 from utils.utils import get_pinyin
 
@@ -11,17 +13,23 @@ from utils.utils import get_pinyin
 # ======================
 load_dotenv()
 
-MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+MODEL = "gpt-oss-120b"
 USE_MOCK = False  # ✅ Toggle between mock and real API
+
+# ======================
+# Idiom dataset
+# ======================
+IDIOM_FILE_PATH = "idiom_dataset/chid_idiom_reference.json"
+with open(IDIOM_FILE_PATH, "r", encoding="utf-8") as f:
+    idiom_list = json.load(f)
+VALID_IDIOMS = set(idiom_list)
 
 # ======================
 # Instantiate client (if not mocking)
 # ======================
 CLIENT = None
 if not USE_MOCK:
-    CLIENT = InferenceClient(
-        provider="cerebras", model=MODEL, api_key=os.environ["HF_TOKEN"]
-    )
+    CLIENT = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
 
 # ======================
@@ -56,14 +64,20 @@ Situation: {situation}
 Answer:"""
 
     response = CLIENT.chat.completions.create(
-        model=MODEL, messages=[{"role": "user", "content": prompt}], max_tokens=150
+        model=MODEL, messages=[{"role": "user", "content": prompt}], 
     )
+    print(response)
 
     generated_text = response.choices[0].message.content.strip()
     lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
 
-    idiom = lines[0] if lines else generated_text
-    pinyin_text = get_pinyin(idiom)
+    llm_idiom = lines[0] if lines else generated_text
+
+    if llm_idiom not in VALID_IDIOMS:
+        explanation = "The LLM generated an invalid idiom. Try again!"
+        return llm_idiom, explanation
+
+    pinyin_text = get_pinyin(llm_idiom)
 
     if len(lines) >= 3:
         translation = lines[1]
@@ -72,7 +86,7 @@ Answer:"""
     else:
         explanation = f"{pinyin_text}<br><br>{' '.join(lines[1:])}"
 
-    return idiom, explanation
+    return llm_idiom, explanation
 
 
 # ======================
