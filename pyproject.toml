@@ -5,7 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "cerebras-cloud-sdk>=1.50.1",
+    "datasets>=4.1.0",
     "gradio>=4.44.1",
+    "ollama>=0.5.3",
+    "pycccedict>=1.2.0",
     "pypinyin>=0.55.0",
 ]
 
