@@ -27,3 +27,5 @@ huggingface/
 
 
 .env 
+
+*.npy
