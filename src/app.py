@@ -5,6 +5,7 @@ import gradio as gr
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 
+from retrieval.retriever import retrieve_idiom
 from utils.utils import get_pinyin
 
 # ======================
@@ -92,11 +93,30 @@ Answer:"""
 # ======================
 # UI Wrapper
 # ======================
-def update_ui(situation):
-    if USE_MOCK:
-        idiom, explanation = generate_idiom_mock()
+def update_ui(situation, mode):
+    if mode == "RAG":
+        top_idioms = retrieve_idiom(situation, top_k=2)
+        formatted_idioms = []
+        for idiom_entry in top_idioms:
+            # Split "<Chinese>: <English>" format
+            if ": " in idiom_entry:
+                chinese, english = idiom_entry.split(": ", 1)
+            else:
+                chinese, english = idiom_entry, ""
+            pinyin_text = get_pinyin(chinese)
+            formatted_idioms.append(f"<div class='idiom-entry'><b>{chinese}</b><br>{pinyin_text}<br>{english}</div>")
+
+        # Combine all entries with horizontal separators
+        idiom = "<hr>".join(formatted_idioms)
+        explanation = "Retrieved using embeddings (RAG)."
+    elif mode == "LLM":
+        if USE_MOCK:
+            idiom, explanation = generate_idiom_mock()
+        else:
+            idiom, explanation = generate_idiom(situation)
     else:
-        idiom, explanation = generate_idiom(situation)
+        idiom = "Unknown mode"
+        explanation = ""
 
     return (
         f"<div class='idiom-output'>{idiom}</div>",
@@ -108,15 +128,20 @@ def update_ui(situation):
 # Launch app
 # ======================
 def launch_app():
+    
     with gr.Blocks(css="style.css") as demo:
         gr.Markdown("# 🎋 Chinese Idiom Finder")
-
         with gr.Row():
             with gr.Column():
                 situation = gr.Textbox(
                     label="Enter a situation",
                     lines=2,
                     placeholder="e.g., When facing a big challenge",
+                )
+                mode_dropdown = gr.Dropdown(
+                    ["LLM", "RAG"],
+                    label="Mode",
+                    value="RAG",
                 )
                 generate_btn = gr.Button("✨ Find Idiom")
 
@@ -138,8 +163,11 @@ def launch_app():
 
         # pylint: disable=no-member
         generate_btn.click(
-            fn=update_ui, inputs=situation, outputs=[idiom_output, explanation_output]
+            fn=update_ui,
+            inputs=[situation, mode_dropdown],
+            outputs=[idiom_output, explanation_output],
         )
+
 
     demo.launch()
 
