@@ -1,9 +1,13 @@
 ---
 <<<<<<< HEAD
+<<<<<<< HEAD
 title: Gradio Chatbot
 =======
 title: Chinese Idiom Finder
 >>>>>>> ffc1d29 (add README.md)
+=======
+title: Chinese Idiom Finder
+>>>>>>> rag-imp-correct
 emoji: 💬
 colorFrom: yellow
 colorTo: purple
