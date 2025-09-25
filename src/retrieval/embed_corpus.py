@@ -1,0 +1,19 @@
+import json
+import numpy as np
+from sentence_transformers import SentenceTransformer
+
+INPUT_FILE = "data/idioms-and-definitions.json"
+EMBED_FILE = "data/idiom_embeddings.npy"
+
+embedder = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Load idioms
+with open(INPUT_FILE, "r", encoding="utf-8") as f:
+    corpus = json.load(f)
+
+# Compute embeddings
+embeddings = embedder.encode(corpus, convert_to_tensor=False, show_progress_bar=True)
+
+# Save to disk
+np.save(EMBED_FILE, embeddings)
+
