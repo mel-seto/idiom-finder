@@ -94,13 +94,8 @@ Answer:"""
 # UI Wrapper
 # ======================
 def update_ui(situation, mode):
-    if mode == "LLM":
-        if USE_MOCK:
-            idiom, explanation = generate_idiom_mock()
-        else:
-            idiom, explanation = generate_idiom(situation)
-    elif mode == "RAG":
-        top_idioms = retrieve_idiom(situation, top_k=3)
+    if mode == "RAG":
+        top_idioms = retrieve_idiom(situation, top_k=2)
         formatted_idioms = []
         for idiom_entry in top_idioms:
             # Split "<Chinese>: <English>" format
@@ -114,6 +109,11 @@ def update_ui(situation, mode):
         # Combine all entries with horizontal separators
         idiom = "<hr>".join(formatted_idioms)
         explanation = "Retrieved using embeddings (RAG)."
+    elif mode == "LLM":
+        if USE_MOCK:
+            idiom, explanation = generate_idiom_mock()
+        else:
+            idiom, explanation = generate_idiom(situation)
     else:
         idiom = "Unknown mode"
         explanation = ""
