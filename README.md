@@ -6,6 +6,7 @@ colorFrom: yellow
 colorTo: purple
 sdk: gradio
 sdk_version: 5.42.0
+python_version: 3.10
 app_file: src/app.py
 pinned: false
 hf_oauth: true
