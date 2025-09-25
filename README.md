@@ -1,5 +1,9 @@
 ---
+<<<<<<< HEAD
 title: Gradio Chatbot
+=======
+title: Chinese Idiom Finder
+>>>>>>> ffc1d29 (add README.md)
 emoji: 💬
 colorFrom: yellow
 colorTo: purple
