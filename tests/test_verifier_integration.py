@@ -6,7 +6,7 @@ from singletons import CC_DICT
 @pytest.mark.integration
 def test_real_idiom_in_cc_cedict():
     """Verify a known idiom exists in CC-CEDICT."""
-    idiom = "山珍海味"  # pick a real idiom in your CC_DICT
+    idiom = "山珍海味" 
     assert verify_idiom_exists(idiom) is True
 
 @pytest.mark.integration
@@ -18,7 +18,7 @@ def test_fake_idiom_not_in_cc_cedict():
 @pytest.mark.integration
 def test_real_idiom_wiktionary(wiktionary_client):
     """Verify that a known idiom exists on Wiktionary."""
-    idiom = "成语"
+    idiom = "山珍海味"
     assert verify_idiom_exists(idiom, wiktionary_client=wiktionary_client) is True
 
 @pytest.mark.integration
