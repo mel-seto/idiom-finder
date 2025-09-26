@@ -4,25 +4,27 @@ from singletons import CC_DICT
 
 
 @pytest.mark.integration
-def test_real_idiom_in_cc_cedict():
-    """Verify a known idiom exists in CC-CEDICT."""
-    idiom = "山珍海味" 
-    assert verify_idiom_exists(idiom) is True
+@pytest.mark.parametrize(
+    "idiom, expected",
+    [
+        # ChiD idioms
+        ("对症下药", True),
+        ("画蛇添足", True),
+        ("自相矛盾", True),
 
-@pytest.mark.integration
-def test_fake_idiom_not_in_cc_cedict():
-    """Verify a non-existent idiom returns False."""
-    idiom = "不存在的成语"
-    assert verify_idiom_exists(idiom) is False
+        # CC-CEDICT idioms
+        ("一成不变", True),
+        ("铁面无私", True),
+        ("德才兼备", True),
 
-@pytest.mark.integration
-def test_real_idiom_wiktionary(wiktionary_client):
-    """Verify that a known idiom exists on Wiktionary."""
-    idiom = "山珍海味"
-    assert verify_idiom_exists(idiom, wiktionary_client=wiktionary_client) is True
+        # Wiktionary-only
+        ("临危不惧", True),
+        ("心旷神怡", True),
 
-@pytest.mark.integration
-def test_fake_idiom_wiktionary(wiktionary_client):
-    """Verify that a made-up idiom does not exist on Wiktionary."""
-    idiom = "不存在的成语"
-    assert verify_idiom_exists(idiom, wiktionary_client=wiktionary_client) is False
+        # Nonexistent idiom
+        ("完全不存在的成语", False),
+    ]
+)
+def test_verify_idiom_integration(idiom, expected):
+    result = verify_idiom_exists(idiom)
+    assert result is expected
