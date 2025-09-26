@@ -1,6 +1,5 @@
 import pytest
-
-from utils.utils import get_pinyin
+from utils import utils
 
 
 @pytest.mark.parametrize(
@@ -12,4 +11,4 @@ from utils.utils import get_pinyin
     ],
 )
 def test_get_pinyin_accent(text, expected):
-    assert get_pinyin(text) == expected
+    assert utils.get_pinyin(text) == expected
