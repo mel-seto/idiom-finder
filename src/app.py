@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from retrieval.retriever import retrieve_idiom
 from utils.utils import get_pinyin
+from verification.verifier import verify_idiom_exists
 
 # ======================
 # Config
@@ -16,13 +17,6 @@ load_dotenv()
 MODEL = "gpt-oss-120b"
 USE_MOCK = False  # ✅ Toggle between mock and real API
 
-# ======================
-# Idiom dataset
-# ======================
-IDIOM_FILE_PATH = "idiom_dataset/chid_idiom_reference.json"
-with open(IDIOM_FILE_PATH, "r", encoding="utf-8") as f:
-    idiom_list = json.load(f)
-VALID_IDIOMS = set(idiom_list)
 
 # ======================
 # Instantiate client (if not mocking)
@@ -46,14 +40,28 @@ def generate_idiom_mock():
 # Real API function
 # ======================
 
+# Global cache for repeated situations
+EXAMPLE_CACHE = {}
 
-def generate_idiom(situation: str):
-    prompt = f"""You are a wise assistant. Given a situation, respond with exactly:
+EXAMPLE_CACHE = {}
+
+def generate_idiom(situation: str, max_attempts: int = 3):
+    """
+    Generate a verified Chinese idiom for a given situation.
+
+    Uses verify_idiom_exists() to confirm idiom validity.
+    """
+    # 1️⃣ Check cache
+    if situation in EXAMPLE_CACHE:
+        return EXAMPLE_CACHE[situation]
+
+    for attempt in range(1, max_attempts + 1):
+        prompt = f"""You are a wise assistant. Given a situation, respond with exactly:
 1. A Chinese idiom (includes 成語、俗語、諺語), 
    written in simplified Chinese characters,
    that conveys the idea of the given situation.
 2. Its literal English translation
-3. Explain idiom. Keep explanation to 2-3 concise sentences.
+3. Explain idiom in English. Keep explanation to 2-3 concise sentences.
 
 Format:
 Idiom
@@ -63,32 +71,36 @@ Explanation
 Situation: {situation}
 Answer:"""
 
-    response = CLIENT.chat.completions.create(
-        model=MODEL,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    print(response)
+        response = CLIENT.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+        )
 
-    generated_text = response.choices[0].message.content.strip()
-    lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
+        generated_text = response.choices[0].message.content.strip()
+        lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
 
-    llm_idiom = lines[0] if lines else generated_text
+        llm_idiom = lines[0] if lines else generated_text
 
-    if llm_idiom not in VALID_IDIOMS:
-        explanation = "The LLM generated an invalid idiom. Try again!"
-        return llm_idiom, explanation
+        # 2️⃣ Verify idiom using CC-CEDICT + Wiktionary
+        if verify_idiom_exists(llm_idiom):
+            pinyin_text = get_pinyin(llm_idiom)
 
-    pinyin_text = get_pinyin(llm_idiom)
+            if len(lines) >= 3:
+                translation = lines[1]
+                meaning = " ".join(lines[2:])
+                explanation = f"{pinyin_text}<br><br>{translation}<br><br>{meaning}"
+            else:
+                explanation = f"{pinyin_text}<br><br>{' '.join(lines[1:])}"
 
-    if len(lines) >= 3:
-        translation = lines[1]
-        meaning = " ".join(lines[2:])
-        explanation = f"{pinyin_text}<br><br>{translation}<br><br>{meaning}"
-    else:
-        explanation = f"{pinyin_text}<br><br>{' '.join(lines[1:])}"
+            EXAMPLE_CACHE[situation] = (llm_idiom, explanation)
+            return llm_idiom, explanation
+        else:
+            print(f"Attempt {attempt}: '{llm_idiom}' failed verification, retrying...")
 
-    return llm_idiom, explanation
-
+    # Fallback if no verified idiom found
+    fallback_idiom = "未找到成语"
+    fallback_explanation = "No verified idiom found for this situation."
+    return fallback_idiom, fallback_explanation
 
 # ======================
 # UI Wrapper
