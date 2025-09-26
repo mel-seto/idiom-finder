@@ -4,6 +4,9 @@ import requests
 from sentence_transformers import SentenceTransformer
 import os
 
+from retrieval import EMBEDDING_MODEL
+
+
 # HF Dataset URL for the embeddings
 EMBED_URL = "https://huggingface.co/datasets/chinese-enthusiasts/idiom-embeddings/resolve/main/idiom_embeddings.npy"
 JSON_URL = "https://huggingface.co/datasets/chinese-enthusiasts/idiom-definitions/resolve/main/idioms-and-definitions.json"
@@ -37,7 +40,7 @@ with open(JSON_FILE, "r", encoding="utf-8") as f:
     corpus = json.load(f)
 
 # Initialize embedder
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
+embedder = SentenceTransformer(EMBEDDING_MODEL)
 
 def retrieve_idiom(situation: str, top_k=5):
     query_emb = embedder.encode([situation], convert_to_tensor=False)
