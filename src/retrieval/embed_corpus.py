@@ -2,10 +2,13 @@ import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
+from .constants import EMBEDDING_MODEL
+
+
 INPUT_FILE = "data/idioms-and-definitions.json"
 EMBED_FILE = "data/idiom_embeddings.npy"
 
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
+embedder = SentenceTransformer(EMBEDDING_MODEL)
 
 # Load idioms
 with open(INPUT_FILE, "r", encoding="utf-8") as f:

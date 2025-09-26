@@ -4,7 +4,7 @@ import requests
 from sentence_transformers import SentenceTransformer
 import os
 
-from retrieval import EMBEDDING_MODEL
+from .constants import EMBEDDING_MODEL
 
 
 # HF Dataset URL for the embeddings
