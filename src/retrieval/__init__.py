@@ -1,0 +1,1 @@
+EMBEDDING_MODEL = "multilingual-e5-small"
