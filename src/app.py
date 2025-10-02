@@ -43,7 +43,6 @@ def generate_idiom_mock():
 # Global cache for repeated situations
 EXAMPLE_CACHE = {}
 
-EXAMPLE_CACHE = {}
 
 def generate_idiom(situation: str, max_attempts: int = 3):
     """
@@ -51,7 +50,6 @@ def generate_idiom(situation: str, max_attempts: int = 3):
 
     Uses verify_idiom_exists() to confirm idiom validity.
     """
-    # 1️⃣ Check cache
     if situation in EXAMPLE_CACHE:
         return EXAMPLE_CACHE[situation]
 
