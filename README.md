@@ -27,7 +27,7 @@ Given a situation, the app suggests a relevant idiom, provides **pinyin**, a **l
 - ✅ **Idiom verification** using:  
   - [ChID dataset](https://arxiv.org/abs/1906.01265) (Chinese Idiom Dataset)  
   - CC-CEDICT (open Chinese–English dictionary)  
-  - Wiktionary (fallback)  
+  - Wiktionary 
 
 ---
 
