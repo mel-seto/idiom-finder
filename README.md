@@ -18,8 +18,6 @@ hf_oauth_scopes:
 An interactive app to discover and learn **Chinese idioms (成语, 俗语, 谚语)**.  
 Given a situation, the app suggests a relevant idiom, provides **pinyin**, a **literal English translation**, and a **concise explanation**.  
 
-👉 Live Demo: [Chinese Idiom Finder on Hugging Face Spaces](https://huggingface.co/spaces/chinese-enthusiasts/idiom-finder)  
-
 ---
 
 ## ✨ Features  
