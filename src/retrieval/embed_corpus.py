@@ -1,8 +1,12 @@
+"""
+This script needs to be re-run each time EMBEDDING_MODEL is updated.
+"""
+
 import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from .constants import EMBEDDING_MODEL
+from constants import EMBEDDING_MODEL
 
 
 INPUT_FILE = "data/idioms-and-definitions.json"
