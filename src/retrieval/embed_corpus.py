@@ -18,9 +18,15 @@ embedder = SentenceTransformer(EMBEDDING_MODEL)
 with open(INPUT_FILE, "r", encoding="utf-8") as f:
     corpus = json.load(f)
 
-# Compute embeddings
-embeddings = embedder.encode(corpus, convert_to_tensor=False, show_progress_bar=True)
+# E5 models expect "passage:" for documents and "query:" for user inputs
+prefixed_corpus = [f"passage: {text}" for text in corpus]
 
-# Save to disk
+embeddings = embedder.encode(
+    prefixed_corpus,
+    convert_to_tensor=False,
+    show_progress_bar=True,
+    normalize_embeddings=True  # important for cosine similarity
+)
+
 np.save(EMBED_FILE, embeddings)
-
+print(f"✅ Saved {len(embeddings)} embeddings to {EMBED_FILE}")

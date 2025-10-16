@@ -27,7 +27,7 @@ def test_empty_query():
     "situation, idiom",
     [
         ("to return from a rewarding journey", "满载而归"),
-        ("omnipresent", "无所不在"),
+        ("everywhere all at once", "无所不在"),
     ],
 )
 def test_definition_returns_correct_idiom(situation, idiom):
