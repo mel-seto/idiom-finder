@@ -43,9 +43,7 @@ with open(JSON_FILE, "r", encoding="utf-8") as f:
 embedder = SentenceTransformer(EMBEDDING_MODEL)
 
 def retrieve_idiom(situation: str, top_k=5):
-    query_emb = embedder.encode([situation], convert_to_tensor=False)
-    similarities = np.dot(corpus_embeddings, query_emb[0]) / (
-        np.linalg.norm(corpus_embeddings, axis=1) * np.linalg.norm(query_emb[0])
-    )
+    query_emb = embedder.encode([f"query: {situation}"], normalize_embeddings=True)
+    similarities = np.dot(corpus_embeddings, query_emb[0])
     top_idx = np.argsort(similarities)[::-1][:top_k]
     return [corpus[i] for i in top_idx]
