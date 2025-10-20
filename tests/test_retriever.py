@@ -23,6 +23,7 @@ def test_empty_query():
         assert isinstance(item, str)
         assert len(item) > 0
 
+## TODO: fix embedding logic so that this test passes
 @pytest.mark.parametrize(
     "situation, idiom",
     [
@@ -34,4 +35,5 @@ def test_definition_returns_correct_idiom(situation, idiom):
     """if input situation is the same as the embedded English definition, 
     RAG implementation should return the correct Chinese idiom"""
     top_k_idioms = retrieve_idiom(situation, top_k=3)
+    print(top_k_idioms)
     assert any(idiom in s for s in top_k_idioms)
