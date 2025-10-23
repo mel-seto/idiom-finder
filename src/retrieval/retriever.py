@@ -3,9 +3,14 @@ import numpy as np
 import requests
 from sentence_transformers import SentenceTransformer
 import os
+import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from .constants import EMBEDDING_MODEL
 
+# from .constants import EMBEDDING_MODEL
+
+EMBEDDING_MODEL = "intfloat/multilingual-e5-large"
+RERANKER_MODEL = "BAAI/bge-reranker-base"
 
 # HF Dataset URL for the embeddings
 EMBED_URL = "https://huggingface.co/datasets/chinese-enthusiasts/idiom-embeddings/resolve/main/idiom_embeddings.npy"
@@ -39,11 +44,46 @@ corpus_embeddings = np.load(EMBED_FILE)
 with open(JSON_FILE, "r", encoding="utf-8") as f:
     corpus = json.load(f)
 
-# Initialize embedder
-embedder = SentenceTransformer(EMBEDDING_MODEL)
 
-def retrieve_idiom(situation: str, top_k=5):
+embedder = SentenceTransformer(EMBEDDING_MODEL)
+tokenizer = AutoTokenizer.from_pretrained('BAAI/bge-reranker-large')
+model = AutoModelForSequenceClassification.from_pretrained('BAAI/bge-reranker-large')
+model.eval()
+
+from sentence_transformers import CrossEncoder
+model2 = CrossEncoder("cross-encoder/ms-marco-MiniLM-L6-v2")
+
+def retrieve_idiom(situation: str, top_k=150):
+    print(f"\n\n\n\n\nRetrieving {top_k} idioms for {situation}")
     query_emb = embedder.encode([f"query: {situation}"], normalize_embeddings=True)
     similarities = np.dot(corpus_embeddings, query_emb[0])
     top_idx = np.argsort(similarities)[::-1][:top_k]
-    return [corpus[i] for i in top_idx]
+    
+    pairs = [({situation}, corpus[i]) for i in top_idx]
+    
+    with torch.no_grad():
+        inputs = tokenizer(pairs, padding=True, truncation=True, return_tensors='pt', max_length=512)
+        scores = model(**inputs, return_dict=True).logits.view(-1, ).float()
+        print(scores)
+
+    # scores = model2.predict(pairs)
+
+    assert len(scores) == len(pairs)
+    assert len(scores) == top_k
+    with_scores = [(pairs[i][1], scores[i]) for i in range(len(scores))]
+    sorted_by_score = list(reversed(sorted(with_scores, key=lambda t: t[1])))
+
+    for thing in sorted_by_score[:10]:
+        print(thing)
+
+    return [x[0] for x in sorted_by_score[:10]]
+
+
+def main():
+    retrieve_idiom("working with an old friend")
+    retrieve_idiom("mother-in-law is annoying")
+    retrieve_idiom("the king is not very nice")
+    retrieve_idiom("studies are boring, but my crush cares about my grades")
+
+if __name__ == "__main__":
+    main()
