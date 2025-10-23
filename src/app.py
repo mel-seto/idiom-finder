@@ -8,13 +8,14 @@ from opencc import OpenCC
 from utils.utils import get_pinyin
 from verification.verifier import verify_idiom_exists
 
+
 # ======================
 # Config
 # ======================
 load_dotenv()
 
 MODEL = "gpt-oss-120b"
-USE_MOCK = False  # ✅ Toggle between mock and real API
+USE_MOCK = True  # ✅ Toggle between mock and real API
 
 # simplified to traditional Chinese character converter
 char_converter = OpenCC('s2t')
@@ -27,14 +28,31 @@ if not USE_MOCK:
     CLIENT = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
 
 
+def format_explanation(pinyin_text: str, translation: str, meaning: str) -> str:
+    return f"""
+    <div style="line-height: 1.4; margin: 0;">
+        <p style="margin: 0;">
+            {pinyin_text}
+        </p>
+        <div style="margin-top: 8px;">
+            <i>{translation}</i><br>
+            {meaning}
+        </div>
+    </div>
+    """
+
+
 # ======================
 # Mock function for UI testing
 # ======================
+
 def find_idiom_mock():
     idiom = "对症下药"
     trad_idiom = char_converter.convert(idiom)
-    explanation = """duì zhèng xià yào<br><br>
-    To prescribe the right medicine; to take the right approach to a problem."""
+    pinyin_text = "duì zhèng xià yào"
+    translation = "To prescribe the right medicine; to take the right approach to a problem."
+    meaning = "add a meaning for the mock"  
+    explanation = format_explanation(pinyin_text, translation, meaning)
     idiom_output = f"{idiom}<br>{trad_idiom}"
     return idiom_output, explanation
 
@@ -94,18 +112,7 @@ Answer:"""
                 translation = ""
                 meaning = " ".join(lines[1:])
 
-            explanation = f"""
-                <div style="line-height: 1.6;">
-                    <p style="margin: 0;">
-                        {pinyin_text}
-                    </p>
-                    <hr style="border: none; border-top: 1px solid #ddd; margin: 8px 0;">
-                    <p style="margin: 0;">
-                        <i>{translation}</i><br>
-                        {meaning}
-                    </p>
-                </div>
-            """
+            explanation = format_explanation(pinyin_text, translation, meaning)
             EXAMPLE_CACHE[situation] = (llm_idiom, explanation)
             idiom_output = f"{llm_idiom}<br>{trad_idiom}"
             return idiom_output, explanation
@@ -128,7 +135,7 @@ def update_ui(situation):
 
     return (
         f"<div class='idiom-output'>{idiom}</div>",
-        f"<div class='explanation-output'>{explanation}</div>",
+        f"<div class='explanation-output' style='margin-top: 1px;'>{explanation}</div>",
     )
 
 
