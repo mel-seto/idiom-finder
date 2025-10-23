@@ -19,7 +19,6 @@ class WiktionaryClient:
             response = requests.get(self.BASE_URL, params=params, headers=self.HEADERS, timeout=5)
             response.raise_for_status()
             data = response.json()
-            print(f'data: {data}')
             pages = data.get("query", {}).get("pages", {})
             exists = "-1" not in pages
         except Exception:
