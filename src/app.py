@@ -29,7 +29,7 @@ if not USE_MOCK:
 # ======================
 # Mock function for UI testing
 # ======================
-def generate_idiom_mock():
+def find_idiom_mock():
     idiom = "对症下药"
     explanation = """duì zhèng xià yào<br><br>
     To prescribe the right medicine; to take the right approach to a problem."""
@@ -44,7 +44,7 @@ def generate_idiom_mock():
 EXAMPLE_CACHE = {}
 
 
-def generate_idiom(situation: str, max_attempts: int = 3):
+def find_idiom(situation: str, max_attempts: int = 3):
     """
     Generate a verified Chinese idiom for a given situation.
 
@@ -105,9 +105,9 @@ Answer:"""
 # ======================
 def update_ui(situation):
     if USE_MOCK:
-        idiom, explanation = generate_idiom_mock()
+        idiom, explanation = find_idiom_mock()
     else:
-        idiom, explanation = generate_idiom(situation)
+        idiom, explanation = find_idiom(situation)
 
     return (
         f"<div class='idiom-output'>{idiom}</div>",
