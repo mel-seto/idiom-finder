@@ -1,11 +1,10 @@
-import json
 import os
 
 import gradio as gr
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
+from opencc import OpenCC
 
-from retrieval.retriever import retrieve_idiom
 from utils.utils import get_pinyin
 from verification.verifier import verify_idiom_exists
 
@@ -17,6 +16,8 @@ load_dotenv()
 MODEL = "gpt-oss-120b"
 USE_MOCK = False  # ✅ Toggle between mock and real API
 
+# simplified to traditional Chinese character converter
+char_converter = OpenCC('s2t')
 
 # ======================
 # Instantiate client (if not mocking)
@@ -31,9 +32,11 @@ if not USE_MOCK:
 # ======================
 def find_idiom_mock():
     idiom = "对症下药"
+    trad_idiom = char_converter.convert(idiom)
     explanation = """duì zhèng xià yào<br><br>
     To prescribe the right medicine; to take the right approach to a problem."""
-    return idiom, explanation
+    idiom_output = f"{idiom}<br>{trad_idiom}"
+    return idiom_output, explanation
 
 
 # ======================
@@ -46,7 +49,7 @@ EXAMPLE_CACHE = {}
 
 def find_idiom(situation: str, max_attempts: int = 3):
     """
-    Generate a verified Chinese idiom for a given situation.
+    Find a verified Chinese idiom for a given situation.
 
     Uses verify_idiom_exists() to confirm idiom validity.
     """
@@ -58,7 +61,7 @@ def find_idiom(situation: str, max_attempts: int = 3):
 1. A Chinese idiom (includes 成語、俗語、諺語), 
    written in simplified Chinese characters,
    that conveys the idea of the given situation.
-2. Its literal English translation
+2. Its literal English translationx
 3. Explain idiom in English. Keep explanation to 2-3 concise sentences.
 
 Format:
@@ -78,6 +81,7 @@ Answer:"""
         lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
 
         llm_idiom = lines[0] if lines else generated_text
+        trad_idiom = char_converter.convert(llm_idiom) if char_converter else None
 
         # 2️⃣ Verify idiom using CC-CEDICT + Wiktionary
         if verify_idiom_exists(llm_idiom):
@@ -86,14 +90,27 @@ Answer:"""
             if len(lines) >= 3:
                 translation = lines[1]
                 meaning = " ".join(lines[2:])
-                explanation = f"{pinyin_text}<br><br>{translation}<br><br>{meaning}"
             else:
-                explanation = f"{pinyin_text}<br><br>{' '.join(lines[1:])}"
+                translation = ""
+                meaning = " ".join(lines[1:])
 
+            explanation = f"""
+                <div style="line-height: 1.6;">
+                    <p style="margin: 0;">
+                        {pinyin_text}
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 8px 0;">
+                    <p style="margin: 0;">
+                        <i>{translation}</i><br>
+                        {meaning}
+                    </p>
+                </div>
+            """
             EXAMPLE_CACHE[situation] = (llm_idiom, explanation)
-            return llm_idiom, explanation
+            idiom_output = f"{llm_idiom}<br>{trad_idiom}"
+            return idiom_output, explanation
         else:
-            print(f"Attempt {attempt}: '{llm_idiom}' failed verification, retrying...")
+            print(f"Attempt {attempt}: '{idiom_output}' failed verification, retrying...")
 
     # Fallback if no verified idiom found
     fallback_idiom = "未找到成语"
