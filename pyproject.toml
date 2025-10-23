@@ -13,6 +13,7 @@ dependencies = [
     "pypinyin>=0.55.0",
     "sentence-transformers>=2.2.2",
     "numpy>=1.26.0",
+    "opencc>=1.1.9",
 ]
 
 [dependency-groups]
