@@ -5,7 +5,6 @@ import gradio as gr
 from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 
-from retrieval.retriever import retrieve_idiom
 from utils.utils import get_pinyin
 from verification.verifier import verify_idiom_exists
 
