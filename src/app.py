@@ -46,14 +46,13 @@ def format_explanation(pinyin_text: str, translation: str, meaning: str) -> str:
 # Mock function for UI testing
 # ======================
 
-def find_idiom_mock():
-    idiom = "对症下药"
-    trad_idiom = char_converter.convert(idiom)
+def find_idiom_mock(traditional: bool):
+    idiom = "對症下藥" if traditional else "对症下药"
     pinyin_text = "duì zhèng xià yào"
     translation = "To prescribe the right medicine; to take the right approach to a problem."
     meaning = "add a meaning for the mock"  
     explanation = format_explanation(pinyin_text, translation, meaning)
-    idiom_output = f"{idiom}<br>{trad_idiom}"
+    idiom_output = f"{idiom}<br>"
     return idiom_output, explanation
 
 
@@ -127,14 +126,16 @@ Answer:"""
 # ======================
 # UI Wrapper
 # ======================
-def update_ui(situation):
+def update_ui(situation, traditional: bool):
     if USE_MOCK:
-        idiom, explanation = find_idiom_mock()
+        idiom, explanation = find_idiom_mock(traditional)
     else:
         idiom, explanation = find_idiom(situation)
 
+    idiom_output = char_converter.convert(idiom.split("<br>")[0]) if traditional else idiom
+    
     return (
-        f"<div class='idiom-output'>{idiom}</div>",
+        f"<div class='idiom-output'>{idiom_output}</div>",
         f"<div class='explanation-output' style='margin-top: 1px;'>{explanation}</div>",
     )
 
@@ -168,13 +169,18 @@ def launch_app():
                 )
 
             with gr.Column():
+                char_mode = gr.Checkbox(
+                    label="Traditional Characters",
+                    value=False,  # False = Simplified, True = Traditional
+                    interactive=True
+                )
                 idiom_output = gr.HTML(label="Idiom")
                 explanation_output = gr.HTML(label="Explanation")
 
         # pylint: disable=no-member
         generate_btn.click(
             fn=update_ui,
-            inputs=[situation],
+            inputs=[situation, char_mode],
             outputs=[idiom_output, explanation_output],
         )
 
