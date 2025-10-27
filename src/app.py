@@ -46,8 +46,8 @@ def format_explanation(pinyin_text: str, translation: str, meaning: str) -> str:
 # Mock function for UI testing
 # ======================
 
-def find_idiom_mock(traditional: bool):
-    idiom = "對症下藥" if traditional else "对症下药"
+def find_idiom_mock():
+    idiom = "对症下药"
     pinyin_text = "duì zhèng xià yào"
     translation = "To prescribe the right medicine; to take the right approach to a problem."
     meaning = "add a meaning for the mock"  
@@ -126,13 +126,13 @@ Answer:"""
 # ======================
 # UI Wrapper
 # ======================
-def update_ui(situation, traditional: bool):
+def update_ui(situation, char_mode: bool):
     if USE_MOCK:
-        idiom, explanation = find_idiom_mock(traditional)
+        idiom, explanation = find_idiom_mock()
     else:
         idiom, explanation = find_idiom(situation)
 
-    idiom_output = char_converter.convert(idiom.split("<br>")[0]) if traditional else idiom
+    idiom_output = char_converter.convert(idiom.split("<br>")[0]) if char_mode else idiom
     
     return (
         f"<div class='idiom-output'>{idiom_output}</div>",
@@ -156,6 +156,7 @@ def launch_app():
                 )
                 generate_btn = gr.Button("✨ Find Idiom")
 
+
                 # ✅ Example situations
                 gr.Examples(
                     examples=[
@@ -169,10 +170,11 @@ def launch_app():
                 )
 
             with gr.Column():
-                char_mode = gr.Checkbox(
-                    label="Traditional Characters",
-                    value=False,  # False = Simplified, True = Traditional
-                    interactive=True
+                char_mode = gr.Radio(
+                    choices=["Simplified", "Traditional"],
+                    value="Traditional",  # default selection
+                    label="",
+                    type="index"  # will pass 0 for Simplified, 1 for Traditional
                 )
                 idiom_output = gr.HTML(label="Idiom")
                 explanation_output = gr.HTML(label="Explanation")
