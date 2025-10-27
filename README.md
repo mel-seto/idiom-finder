@@ -1,17 +1,4 @@
----
 
-title: Chinese Idiom Finder
-emoji: 💬
-colorFrom: yellow
-colorTo: purple
-sdk: gradio
-sdk_version: 5.42.0
-app_file: src/app.py
-pinned: false
-hf_oauth: true
-hf_oauth_scopes:
- - inference-api
----
 
 # 🀄 Chinese Idiom Finder  
 
@@ -58,3 +45,20 @@ git clone https://huggingface.co/spaces/chinese-enthusiasts/idiom-finder
 cd idiom-finder
 pip install -r requirements.txt
 python app.py
+
+
+# HuggingFace setup
+---
+
+title: Chinese Idiom Finder
+emoji: 💬
+colorFrom: yellow
+colorTo: purple
+sdk: gradio
+sdk_version: 5.42.0
+app_file: src/app.py
+pinned: false
+hf_oauth: true
+hf_oauth_scopes:
+ - inference-api
+---
