@@ -155,8 +155,7 @@ def launch_app():
                     placeholder="e.g., When facing a big challenge",
                 )
                 generate_btn = gr.Button("✨ Find Idiom")
-
-
+        
                 # ✅ Example situations
                 gr.Examples(
                     examples=[
@@ -169,15 +168,15 @@ def launch_app():
                     inputs=situation,
                 )
 
+    
             with gr.Column():
-                char_mode = gr.Radio(
-                    choices=["Simplified", "Traditional"],
-                    value="Traditional",  # default selection
-                    label="",
-                    type="index"  # will pass 0 for Simplified, 1 for Traditional
+                char_mode = gr.Checkbox(
+                    label="Show Traditional", 
+                    value = True,
                 )
                 idiom_output = gr.HTML(label="Idiom")
                 explanation_output = gr.HTML(label="Explanation")
+        
 
         # pylint: disable=no-member
         generate_btn.click(
