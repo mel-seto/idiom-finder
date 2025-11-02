@@ -1,0 +1,11 @@
+---
+title: Chinese Idiom Finder
+emoji: 💬
+colorFrom: yellow
+colorTo: purple
+sdk: gradio
+sdk_version: 5.42.0
+app_file: src/app.py
+pinned: false
+---
+
