@@ -4,9 +4,11 @@ import gradio as gr
 import backoff
 from cerebras.cloud.sdk import APIConnectionError, APIStatusError, Cerebras, RateLimitError
 from dotenv import load_dotenv
+from opencc import OpenCC
 
 from utils.utils import get_pinyin
 from verification.verifier import verify_idiom_exists
+
 
 # ======================
 # Config
@@ -16,27 +18,45 @@ load_dotenv()
 MODEL = "gpt-oss-120b"
 USE_MOCK = False  # ✅ Toggle between mock and real API
 
+# simplified to traditional Chinese character converter
+char_converter = OpenCC('s2t')
+# Set default to Traditional characters due to user base
+IS_TRADITIONAL = True 
 
 # ======================
 # Instantiate client (if not mocking)
 # ======================
 CLIENT = None
 if not USE_MOCK:
-    CLIENT = Cerebras(
-        api_key=os.environ.get("CEREBRAS_API_KEY"),
-        timeout=20,     # 20 seconds (default is 60 seconds)
-        max_retries=2
-    )
+    CLIENT = Cerebras(api_key=os.environ.get("CEREBRAS_API_KEY"))
+
+
+def format_explanation(pinyin_text: str, translation: str, meaning: str) -> str:
+    return f"""
+    <div style="line-height: 1.4; margin: 0;">
+        <p style="margin: 0;">
+            {pinyin_text}
+        </p>
+        <div style="margin-top: 8px;">
+            <i>{translation}</i><br>
+            {meaning}
+        </div>
+    </div>
+    """
 
 
 # ======================
 # Mock function for UI testing
 # ======================
-def generate_idiom_mock():
+
+def find_idiom_mock():
     idiom = "对症下药"
-    explanation = """duì zhèng xià yào<br><br>
-    To prescribe the right medicine; to take the right approach to a problem."""
-    return idiom, explanation
+    pinyin_text = "duì zhèng xià yào"
+    translation = "To prescribe the right medicine; to take the right approach to a problem."
+    meaning = "add a meaning for the mock"  
+    explanation = format_explanation(pinyin_text, translation, meaning)
+    idiom_output = f"{idiom}<br>"
+    return idiom_output, explanation
 
 
 # ======================
@@ -48,9 +68,9 @@ EXAMPLE_CACHE = {}
 
 
 @backoff.on_exception(backoff.expo, RateLimitError)
-def generate_idiom(situation: str, max_attempts: int = 3):
+def find_idiom(situation: str, max_attempts: int = 3):
     """
-    Generate a verified Chinese idiom for a given situation.
+    Find a verified Chinese idiom for a given situation.
 
     Uses verify_idiom_exists() to confirm idiom validity.
     """
@@ -81,6 +101,7 @@ def generate_idiom(situation: str, max_attempts: int = 3):
     lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
 
     llm_idiom = lines[0] if lines else generated_text
+    trad_idiom = char_converter.convert(llm_idiom) if char_converter else None
 
     # 2️⃣ Verify idiom using CC-CEDICT + Wiktionary
     if verify_idiom_exists(llm_idiom):
@@ -89,13 +110,16 @@ def generate_idiom(situation: str, max_attempts: int = 3):
         if len(lines) >= 3:
             translation = lines[1]
             meaning = " ".join(lines[2:])
-            explanation = f"{pinyin_text}<br><br>{translation}<br><br>{meaning}"
         else:
-            explanation = f"{pinyin_text}<br><br>{' '.join(lines[1:])}"
-
+            translation = ""
+            meaning = " ".join(lines[1:])
+       
+        explanation = format_explanation(pinyin_text, translation, meaning)
         EXAMPLE_CACHE[situation] = (llm_idiom, explanation)
-        return llm_idiom, explanation
-    
+        idiom_output = f"{llm_idiom}<br>{trad_idiom}"
+        return idiom_output, explanation
+        
+
     # Fallback if no verified idiom found
     fallback_idiom = "未找到成语"
     fallback_explanation = "No verified idiom found for this situation."
@@ -106,17 +130,21 @@ def generate_idiom(situation: str, max_attempts: int = 3):
 # ======================
 def update_ui(situation):
     if USE_MOCK:
-        idiom, explanation = generate_idiom_mock()
+        idiom, explanation = find_idiom_mock()
     else:
         try:
-            idiom, explanation = generate_idiom(situation)
+            idiom, explanation = find_idiom(situation)
         except RateLimitError:
             idiom = ""
             explanation = "<div class='error-message'>Too many requests. Please try again later.</div>"
 
+        idiom, explanation = find_idiom(situation)
+
+    idiom_output = char_converter.convert(idiom.split("<br>")[0]) if IS_TRADITIONAL else idiom
+    
     return (
-        f"<div class='idiom-output'>{idiom}</div>",
-        f"<div class='explanation-output'>{explanation}</div>",
+        f"<div class='idiom-output'>{idiom_output}</div>",
+        f"<div class='explanation-output' style='margin-top: 1px;'>{explanation}</div>",
     )
 
 
@@ -135,7 +163,7 @@ def launch_app():
                     placeholder="e.g., When facing a big challenge",
                 )
                 generate_btn = gr.Button("✨ Find Idiom")
-
+        
                 # ✅ Example situations
                 gr.Examples(
                     examples=[
@@ -148,9 +176,11 @@ def launch_app():
                     inputs=situation,
                 )
 
+    
             with gr.Column():
                 idiom_output = gr.HTML(label="Idiom")
                 explanation_output = gr.HTML(label="Explanation")
+        
 
         # pylint: disable=no-member
         generate_btn.click(
