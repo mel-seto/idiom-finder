@@ -1,7 +1,8 @@
 import os
 
 import gradio as gr
-from cerebras.cloud.sdk import Cerebras
+import backoff
+from cerebras.cloud.sdk import APIConnectionError, APIStatusError, Cerebras, RateLimitError
 from dotenv import load_dotenv
 from opencc import OpenCC
 
@@ -15,7 +16,7 @@ from verification.verifier import verify_idiom_exists
 load_dotenv()
 
 MODEL = "gpt-oss-120b"
-USE_MOCK = True  # ✅ Toggle between mock and real API
+USE_MOCK = False  # ✅ Toggle between mock and real API
 
 # simplified to traditional Chinese character converter
 char_converter = OpenCC('s2t')
@@ -64,6 +65,7 @@ def find_idiom_mock():
 EXAMPLE_CACHE = {}
 
 
+@backoff.on_exception(backoff.expo, RateLimitError)
 def find_idiom(situation: str, max_attempts: int = 3):
     """
     Find a verified Chinese idiom for a given situation.
@@ -73,50 +75,48 @@ def find_idiom(situation: str, max_attempts: int = 3):
     if situation in EXAMPLE_CACHE:
         return EXAMPLE_CACHE[situation]
 
-    for attempt in range(1, max_attempts + 1):
-        prompt = f"""You are a wise assistant. Given a situation, respond with exactly:
-1. A Chinese idiom (includes 成語、俗語、諺語), 
-   written in simplified Chinese characters,
-   that conveys the idea of the given situation.
-2. Its literal English translationx
-3. Explain idiom in English. Keep explanation to 2-3 concise sentences.
+    prompt = f"""You are a wise assistant. Given a situation, respond with exactly:
+        1. A Chinese idiom (includes 成語、俗語、諺語), 
+        written in simplified Chinese characters,
+        that conveys the idea of the given situation.
+        2. Its literal English translation
+        3. Explain idiom in English. Keep explanation to 2-3 concise sentences.
 
-Format:
-Idiom
-Literal translation
-Explanation
+        Format:
+        Idiom
+        Literal translation
+        Explanation
 
-Situation: {situation}
-Answer:"""
+        Situation: {situation}
+        Answer:"""
 
-        response = CLIENT.chat.completions.create(
-            model=MODEL,
-            messages=[{"role": "user", "content": prompt}],
-        )
+    response = CLIENT.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+    )
 
-        generated_text = response.choices[0].message.content.strip()
-        lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
+    generated_text = response.choices[0].message.content.strip()
+    lines = [line.strip() for line in generated_text.split("\n") if line.strip()]
 
-        llm_idiom = lines[0] if lines else generated_text
-        trad_idiom = char_converter.convert(llm_idiom) if char_converter else None
+    llm_idiom = lines[0] if lines else generated_text
+    trad_idiom = char_converter.convert(llm_idiom) if char_converter else None
 
-        # 2️⃣ Verify idiom using CC-CEDICT + Wiktionary
-        if verify_idiom_exists(llm_idiom):
-            pinyin_text = get_pinyin(llm_idiom)
+    # 2️⃣ Verify idiom using CC-CEDICT + Wiktionary
+    if verify_idiom_exists(llm_idiom):
+        pinyin_text = get_pinyin(llm_idiom)
 
-            if len(lines) >= 3:
-                translation = lines[1]
-                meaning = " ".join(lines[2:])
-            else:
-                translation = ""
-                meaning = " ".join(lines[1:])
-
-            explanation = format_explanation(pinyin_text, translation, meaning)
-            EXAMPLE_CACHE[situation] = (llm_idiom, explanation)
-            idiom_output = f"{llm_idiom}<br>{trad_idiom}"
-            return idiom_output, explanation
+        if len(lines) >= 3:
+            translation = lines[1]
+            meaning = " ".join(lines[2:])
         else:
-            print(f"Attempt {attempt}: '{idiom_output}' failed verification, retrying...")
+            translation = ""
+            meaning = " ".join(lines[1:])
+       
+        explanation = format_explanation(pinyin_text, translation, meaning)
+        EXAMPLE_CACHE[situation] = (llm_idiom, explanation)
+        idiom_output = f"{llm_idiom}<br>{trad_idiom}"
+        return idiom_output, explanation
+        
 
     # Fallback if no verified idiom found
     fallback_idiom = "未找到成语"
@@ -130,6 +130,12 @@ def update_ui(situation, char_mode: bool):
     if USE_MOCK:
         idiom, explanation = find_idiom_mock()
     else:
+        try:
+            idiom, explanation = find_idiom(situation)
+        except RateLimitError:
+            idiom = ""
+            explanation = "<div class='error-message'>Too many requests. Please try again later.</div>"
+
         idiom, explanation = find_idiom(situation)
 
     idiom_output = char_converter.convert(idiom.split("<br>")[0]) if char_mode else idiom
