@@ -1,4 +1,5 @@
 cerebras-cloud-sdk>=1.50.1
+backoff
 datasets>=4.1.0
 gradio>=4.44.1
 ollama>=0.5.3
