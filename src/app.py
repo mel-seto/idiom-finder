@@ -20,6 +20,8 @@ USE_MOCK = False  # ✅ Toggle between mock and real API
 
 # simplified to traditional Chinese character converter
 char_converter = OpenCC('s2t')
+# Set default to Traditional characters due to user base
+IS_TRADITIONAL = True 
 
 # ======================
 # Instantiate client (if not mocking)
@@ -126,7 +128,7 @@ def find_idiom(situation: str, max_attempts: int = 3):
 # ======================
 # UI Wrapper
 # ======================
-def update_ui(situation, char_mode: bool):
+def update_ui(situation):
     if USE_MOCK:
         idiom, explanation = find_idiom_mock()
     else:
@@ -138,7 +140,7 @@ def update_ui(situation, char_mode: bool):
 
         idiom, explanation = find_idiom(situation)
 
-    idiom_output = char_converter.convert(idiom.split("<br>")[0]) if char_mode else idiom
+    idiom_output = char_converter.convert(idiom.split("<br>")[0]) if IS_TRADITIONAL else idiom
     
     return (
         f"<div class='idiom-output'>{idiom_output}</div>",
@@ -176,10 +178,6 @@ def launch_app():
 
     
             with gr.Column():
-                char_mode = gr.Checkbox(
-                    label="Show Traditional", 
-                    value = True,
-                )
                 idiom_output = gr.HTML(label="Idiom")
                 explanation_output = gr.HTML(label="Explanation")
         
@@ -187,7 +185,7 @@ def launch_app():
         # pylint: disable=no-member
         generate_btn.click(
             fn=update_ui,
-            inputs=[situation, char_mode],
+            inputs=[situation],
             outputs=[idiom_output, explanation_output],
         )
 
