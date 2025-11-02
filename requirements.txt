@@ -5,5 +5,5 @@ gradio>=4.44.1
 ollama>=0.5.3
 pycccedict>=1.2.0
 pypinyin>=0.55.0
+opencc>=1.1.9
 sentence-transformers>=2.2.2
-numpy>=1.26.0
